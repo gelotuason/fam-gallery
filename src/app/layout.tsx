@@ -5,7 +5,7 @@ import CustomCursor from './components/custom-cursor'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Interactive Floating Image Gallery',
+  title: 'Tuason Fam Gallery',
   description: 'A creative and highly interactive floating image gallery that responds to cursor and touch movement',
 }
 
