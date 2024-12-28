@@ -1,101 +1,174 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import { motion, useAnimation, AnimatePresence } from 'framer-motion'
+
+const images = [
+  '/image1.jpg',
+  '/image2.jpg',
+  '/image3.jpg',
+  '/image4.jpg',
+  '/image5.jpg',
+  '/image6.jpg',
+  '/image7.jpg',
+  '/image8.jpg',
+  '/image9.jpg',
+]
+
+export default function FloatingGallery() {
+  const [interactionPosition, setInteractionPosition] = useState({ x: 0, y: 0 })
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const handleInteraction = (e: MouseEvent | TouchEvent) => {
+      const position = 'touches' in e
+        ? { x: e.touches[0].clientX, y: e.touches[0].clientY }
+        : { x: (e as MouseEvent).clientX, y: (e as MouseEvent).clientY }
+      setInteractionPosition(position)
+    }
+
+    window.addEventListener('mousemove', handleInteraction)
+    window.addEventListener('touchmove', handleInteraction)
+
+    return () => {
+      window.removeEventListener('mousemove', handleInteraction)
+      window.removeEventListener('touchmove', handleInteraction)
+    }
+  }, [])
+
+  const handleImageClick = (src: string) => {
+    setSelectedImage(src)
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 to-indigo-900 p-4 sm:p-8 overflow-hidden">
+      <div className="relative w-full h-[calc(100vh-6rem)] sm:h-[calc(100vh-8rem)]">
+        {images.map((src, index) => (
+          <FloatingImage
+            key={index}
+            src={src}
+            interactionPosition={interactionPosition}
+            index={index}
+            onClick={() => handleImageClick(src)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ))}
+      </div>
+      <AnimatePresence>
+        {selectedImage && (
+          <EnlargedImage src={selectedImage} onClose={() => setSelectedImage(null)} />
+        )}
+      </AnimatePresence>
     </div>
-  );
+  )
 }
+
+interface FloatingImageProps {
+  src: string
+  interactionPosition: { x: number; y: number }
+  index: number
+  onClick: () => void
+}
+
+function FloatingImage({ src, interactionPosition, index, onClick }: FloatingImageProps) {
+  const controls = useAnimation()
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const randomPosition = () => ({
+      x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth * 0.8 : 0),
+      y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight * 0.8 : 0),
+    })
+
+    setPosition(randomPosition())
+
+    const interval = setInterval(() => {
+      const newPosition = randomPosition()
+      controls.start({
+        x: newPosition.x,
+        y: newPosition.y,
+        transition: { duration: 20, ease: 'easeInOut' },
+      })
+    }, 20000)
+
+    return () => clearInterval(interval)
+  }, [controls])
+
+  useEffect(() => {
+    const distance = Math.sqrt(
+      Math.pow(interactionPosition.x - position.x, 2) + Math.pow(interactionPosition.y - position.y, 2)
+    )
+
+    const maxDistance = typeof window !== 'undefined' ? Math.min(300, window.innerWidth / 3) : 300
+    const scale = Math.max(0.8, 1.2 - distance / maxDistance)
+
+    controls.start({
+      scale,
+      transition: { duration: 0.3 },
+    })
+  }, [interactionPosition, position, controls])
+
+  return (
+    <motion.div
+      className="absolute cursor-pointer"
+      style={{ left: position.x, top: position.y }}
+      animate={controls}
+      initial={{ opacity: 0, scale: 0.5 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      whileHover={{ scale: 1.1 }}
+      onClick={onClick}
+    >
+      <Image
+        src={src}
+        alt={`Floating image ${index + 1}`}
+        width={200}
+        height={200}
+        className="rounded-full shadow-lg w-16 h-16 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-cover"
+      />
+    </motion.div>
+  )
+}
+
+interface EnlargedImageProps {
+  src: string
+  onClose: () => void
+}
+
+function EnlargedImage({ src, onClose }: EnlargedImageProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.8 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0.8 }}
+        className="relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Image
+          src={src}
+          alt="Enlarged image"
+          width={800}
+          height={800}
+          className="max-w-full max-h-[90vh] object-contain rounded-lg"
+        />
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </motion.div>
+    </motion.div>
+  )
+}
+
